@@ -1,0 +1,84 @@
+
+---
+title: "Discussion_2"
+output:
+  html_document: default
+---
+
+```{r}
+# load the packages
+library('dplyr')
+library(car) # for VIF
+# read data file
+dat <- read.csv('Elantra.csv')
+```
+
+
+```{r}
+# have a first look at the data
+summary(dat)
+plot(dat)
+hist(dat$Unemployment)
+boxplot(dat$CPI.All)
+nrow(dat)
+ncol(dat)
+```
+
+```{r}
+# show the missing value
+missing_value <- function(dat){
+  mis_val = sum(is.null(dat))
+  mis_val_percent = mis_val / nrow(dat) * 100
+  mis_tbl = matrix(c(mis_val,mis_val_percent), nrow = ncol(dat), ncol = 2)
+  colnames(mis_tbl) = c('Missing values','% of Total Values')
+  rownames(mis_tbl) = colnames(dat)
+  return(mis_tbl)
+}
+missing_value(dat)
+```
+
+
+```{r}
+# split training data and test data
+training <- filter(dat,Year <= 2016)
+test <- filter(dat,Year>= 2017)
+test
+```
+
+
+```{r}
+# use some of the variables to build model
+mod1 <- lm(ElantraSales ~ Unemployment+ CPI.Energy + CPI.All+ElantraQueries, data = training)
+# check the summary of model
+summary(mod1)
+# check multicollinearity
+vif(mod1)
+#check multicolinearity
+```
+
+
+
+```{r}
+# based on previous results, build the second model
+mod2 <- lm(ElantraSales ~ CPI.Energy + ElantraQueries, data = training)
+summary(mod2)
+vif(mod2)
+```
+
+```{r}
+# use model 1 to predict
+prediction_f <- predict(mod1, newdata=test)
+SSE = sum((test$ElantraSales - prediction_f)^2)#sum of squared error
+SST = sum((test$ElantraSales - mean(training$ElantraSales))^2) #
+OSR2_f = 1 - SSE/SST
+OSR2_f
+```
+
+```{r}
+# use model 2 to predict
+prediction_f <- predict(mod2, newdata=test)
+SSE = sum((test$ElantraSales - prediction_f)^2)
+SST = sum((test$ElantraSales - mean(training$ElantraSales))^2)
+OSR2_f = 1 - SSE/SST
+OSR2_f
+```
